@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ingrid - Localhost Spreadsheet Application [BETA]</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
+</head>
+<body>
+  <div id="app">
+    <!-- Top Banner with ASCII Art Logo & Beta Badge -->
+    <header class="app-header">
+      <div class="logo-container">
+        <pre class="ascii-logo">
+ ██████╗███╗   ██╗ ██████╗  ██████╗  ██████╗
+  ██║  ████╗  ██║██╔════╝  ██╔══██╗ ██╔══██╗
+  ██║  ██╔██╗ ██║██║  ███╗ ██████╔╝ ██║  ██║
+  ██║  ██║╚██╗██║██║   ██║ ██╔══██╗ ██║  ██║
+ ██████╗██║ ╚████║╚██████╔╝██║  ██║ ██████╔╝
+ ╚═════╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝ ╚═════╝</pre>
+        <div class="brand-details">
+          <div class="brand-title-row">
+            <span class="brand-name">Ingrid</span>
+            <span class="beta-badge">BETA</span>
+          </div>
+          <span class="brand-subtitle">INtelligent GRID — Localhost Spreadsheet</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <input type="text" id="spreadsheet-title" class="title-input" value="Untitled Spreadsheet" placeholder="Spreadsheet Title">
+        <button id="btn-save" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+        <button id="btn-sheets-list" class="btn btn-secondary"><i class="fa-solid fa-folder-open"></i> My Sheets</button>
+        <button id="btn-import-csv" class="btn btn-secondary"><i class="fa-solid fa-file-import"></i> Import CSV</button>
+        <button id="btn-export-csv" class="btn btn-secondary"><i class="fa-solid fa-file-export"></i> Export CSV</button>
+        <input type="file" id="csv-file-input" accept=".csv" style="display: none;">
+      </div>
+    </header>
+
+    <!-- Toolbar -->
+    <section class="toolbar">
+      <div class="tool-group">
+        <button id="btn-bold" class="tool-btn" title="Bold"><i class="fa-solid fa-bold"></i></button>
+        <button id="btn-italic" class="tool-btn" title="Italic"><i class="fa-solid fa-italic"></i></button>
+        <button id="btn-underline" class="tool-btn" title="Underline"><i class="fa-solid fa-underline"></i></button>
+      </div>
+
+      <div class="tool-divider"></div>
+
+      <div class="tool-group">
+        <label for="bg-color-picker" class="color-picker-label" title="Background Color">
+          <i class="fa-solid fa-fill-drip"></i>
+          <input type="color" id="bg-color-picker" value="#ffffff">
+        </label>
+        <label for="text-color-picker" class="color-picker-label" title="Text Color">
+          <i class="fa-solid fa-font"></i>
+          <input type="color" id="text-color-picker" value="#1e293b">
+        </label>
+      </div>
+
+      <div class="tool-divider"></div>
+
+      <div class="tool-group">
+        <button id="btn-align-left" class="tool-btn" title="Align Left"><i class="fa-solid fa-align-left"></i></button>
+        <button id="btn-align-center" class="tool-btn" title="Align Center"><i class="fa-solid fa-align-center"></i></button>
+        <button id="btn-align-right" class="tool-btn" title="Align Right"><i class="fa-solid fa-align-right"></i></button>
+      </div>
+
+      <div class="tool-divider"></div>
+
+      <div class="tool-group">
+        <select id="select-format" class="tool-select" title="Number Format">
+          <option value="general">General</option>
+          <option value="number">Number (0.00)</option>
+          <option value="currency">Currency ($)</option>
+          <option value="percent">Percentage (%)</option>
+        </select>
+      </div>
+
+      <div class="tool-divider"></div>
+
+      <div class="tool-group">
+        <button id="btn-add-row" class="tool-btn" title="Add Row Below"><i class="fa-solid fa-plus"></i> Row</button>
+        <button id="btn-add-col" class="tool-btn" title="Add Column Right"><i class="fa-solid fa-plus"></i> Column</button>
+      </div>
+
+      <div class="tool-divider"></div>
+
+      <div class="tool-group quick-formulas">
+        <span class="toolbar-label">Quick:</span>
+        <button class="chip-btn" data-formula="=SUM()">SUM</button>
+        <button class="chip-btn" data-formula="=AVERAGE()">AVG</button>
+        <button class="chip-btn" data-formula="=COUNT()">COUNT</button>
+        <button class="chip-btn" data-formula="=IF()">IF</button>
+      </div>
+    </section>
+
+    <!-- Formula Bar -->
+    <section class="formula-bar">
+      <div id="active-cell-id" class="cell-id-indicator">A1</div>
+      <div class="formula-fx"><i class="fa-solid fa-square-root-variable"></i></div>
+      <input type="text" id="formula-input" class="formula-input" placeholder="Select a cell or type a formula (=SUM(A1:A5))">
+    </section>
+
+    <!-- Main Grid Workspace -->
+    <main class="grid-container" id="grid-container">
+      <table class="spreadsheet-table" id="spreadsheet-table">
+        <thead id="grid-header"></thead>
+        <tbody id="grid-body"></tbody>
+      </table>
+    </main>
+
+    <!-- Bottom Sheet Tabs & Status Bar -->
+    <footer class="app-footer">
+      <div class="tab-bar">
+        <div id="tabs-list" class="tabs-list"></div>
+        <button id="btn-add-tab" class="btn-icon" title="Add Sheet Tab"><i class="fa-solid fa-plus"></i></button>
+      </div>
+      <div id="status-bar" class="status-bar">
+        <span id="status-text">Ready</span>
+        <span id="status-info" class="status-info">Ingrid v0.1.0-beta | Localhost</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Sheets Modal -->
+  <div id="sheets-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-folder-open"></i> Saved Spreadsheets</h3>
+        <button id="btn-close-modal" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="sheets-modal-list" class="sheets-list"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-new-spreadsheet" class="btn btn-primary"><i class="fa-solid fa-file-circle-plus"></i> Create New Spreadsheet</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
