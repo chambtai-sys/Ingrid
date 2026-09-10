@@ -1,0 +1,29 @@
+{
+  "name": "ingrid",
+  "version": "0.1.0-beta",
+  "description": "Ingrid - A fast, local-first spreadsheet application built for localhost productivity.",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "jest --verbose"
+  },
+  "keywords": [
+    "spreadsheet",
+    "localhost",
+    "excel",
+    "csv",
+    "grid",
+    "ingrid"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4"
+  }
+}
