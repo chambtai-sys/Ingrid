@@ -36,7 +36,7 @@
 
 1. **Clone & Install Dependencies**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/chambtai-sys/Ingrid.git
    cd ingrid
    npm install
    ```
