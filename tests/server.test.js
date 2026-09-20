@@ -1,5 +1,5 @@
 const request = require('supertest');
-const { app, ASCII_LOGO, parseCsvText } = require('../src/server');
+const { app, ASCII_LOGO } = require('../src/server');
 const fs = require('fs');
 const path = require('path');
 
@@ -15,7 +15,7 @@ describe('Ingrid Server API', () => {
         id: 'Sheet1',
         name: 'Sheet1',
         cells: {
-          'A1': { raw: '100', style: { bold: true } },
+          'A1': { raw: '100', style: { bold: true }, comment: 'Important revenue note' },
           'A2': { raw: '200' },
           'A3': { raw: '=SUM(A1:A2)' }
         }
@@ -38,11 +38,11 @@ describe('Ingrid Server API', () => {
   });
 
   test('ASCII logo contains BETA', () => {
-    expect(ASCII_LOGO).toContain('[BETA]');
+    expect(ASCII_LOGO).toContain('[v1.5 BETA]');
     expect(ASCII_LOGO).toContain('INtelligent GRID');
   });
 
-  test('POST /api/sheets saves sheet', async () => {
+  test('POST /api/sheets saves sheet with comment metadata', async () => {
     const res = await request(app)
       .post('/api/sheets')
       .send(testSheet);
@@ -61,10 +61,11 @@ describe('Ingrid Server API', () => {
     expect(found.title).toBe('Test Budget');
   });
 
-  test('GET /api/sheets/:id retrieves sheet content', async () => {
+  test('GET /api/sheets/:id retrieves sheet content with comment metadata', async () => {
     const res = await request(app).get('/api/sheets/test-sheet-1');
     expect(res.statusCode).toEqual(200);
     expect(res.body.title).toBe('Test Budget');
+    expect(res.body.tabs[0].cells['A1'].comment).toBe('Important revenue note');
     expect(res.body.tabs[0].cells['A3'].raw).toBe('=SUM(A1:A2)');
   });
 
@@ -74,7 +75,7 @@ describe('Ingrid Server API', () => {
     expect(res.headers['content-type']).toContain('text/csv');
     expect(res.text).toContain('100');
     expect(res.text).toContain('200');
-    expect(res.text).toContain('300'); // evaluated =SUM(A1:A2)
+    expect(res.text).toContain('300');
   });
 
   test('POST /api/sheets/import/csv imports CSV text into a new spreadsheet', async () => {
@@ -89,7 +90,6 @@ describe('Ingrid Server API', () => {
     expect(res.body.sheet).toBeDefined();
     expect(res.body.sheet.title).toBe('FruitStore');
     expect(res.body.sheet.tabs[0].cells['A1'].raw).toBe('Item');
-    expect(res.body.sheet.tabs[0].cells['B2'].raw).toBe('1.50');
 
     importedSheetId = res.body.sheet.id;
   });

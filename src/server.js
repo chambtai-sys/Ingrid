@@ -11,11 +11,11 @@ const DATA_DIR = path.join(__dirname, '../data/sheets');
 const ASCII_LOGO = `
  ██████╗███╗   ██╗ ██████╗  ██████╗  ██████╗
   ██║  ████╗  ██║██╔════╝  ██╔══██╗ ██╔══██╗
-  ██║  ██╔██╗ ██║██║  ███╗ ██████╔╝ ██║  ██║  [BETA]
+  ██║  ██╔██╗ ██║██║  ███╗ ██████╔╝ ██║  ██║  [v1.5 BETA]
   ██║  ██║╚██╗██║██║   ██║ ██╔══██╗ ██║  ██║
  ██████╗██║ ╚████║╚██████╔╝██║  ██║ ██████╔╝
  ╚═════╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝ ╚═════╝
-        INtelligent GRID spreadsheet engine
+        INtelligent GRID spreadsheet engine 1.5
 `;
 
 app.use(cors());
@@ -120,7 +120,7 @@ app.get('/api/sheets/:id', (req, res) => {
   }
 });
 
-// POST /api/sheets - Create or save a sheet
+// POST /api/sheets - Create or save a sheet (including cell comments/notes metadata)
 app.post('/api/sheets', (req, res) => {
   try {
     const sheetData = req.body;
@@ -128,6 +128,7 @@ app.post('/api/sheets', (req, res) => {
       return res.status(400).json({ error: 'Missing sheet id' });
     }
     sheetData.updatedAt = new Date().toISOString();
+    sheetData.version = '1.5';
     const filePath = getSheetPath(sheetData.id);
     fs.writeFileSync(filePath, JSON.stringify(sheetData, null, 2), 'utf8');
     res.json({ success: true, id: sheetData.id, updatedAt: sheetData.updatedAt });
@@ -165,8 +166,6 @@ app.get('/api/sheets/:id/export/csv', (req, res) => {
     }
 
     const cells = tab.cells || {};
-    const rowCount = sheetData.rowCount || 50;
-    const colCount = sheetData.colCount || 26;
 
     const getCellValue = (ref) => {
       const cell = cells[ref];
@@ -176,7 +175,6 @@ app.get('/api/sheets/:id/export/csv', (req, res) => {
     let maxFilledRow = 0;
     let maxFilledCol = 0;
 
-    // Find bounding box
     Object.keys(cells).forEach(ref => {
       const match = /^([A-Z]+)([1-9][0-9]*)$/.exec(ref);
       if (match) {
@@ -266,7 +264,7 @@ app.post('/api/sheets/import/csv', express.text({ type: '*/*' }), (req, res) => 
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(ASCII_LOGO);
-    console.log(`Ingrid Spreadsheet App running locally on http://localhost:${PORT}`);
+    console.log(`Ingrid Spreadsheet App 1.5 running locally on http://localhost:${PORT}`);
   });
 }
 

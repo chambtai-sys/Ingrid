@@ -478,6 +478,55 @@ class Parser {
         };
         return flattenStrings(args);
       }
+      case 'UPPER': {
+        if (args.length === 0) return '';
+        return String(args[0]).toUpperCase();
+      }
+      case 'LOWER': {
+        if (args.length === 0) return '';
+        return String(args[0]).toLowerCase();
+      }
+      case 'LEN': {
+        if (args.length === 0) return 0;
+        return String(args[0]).length;
+      }
+      case 'TRIM': {
+        if (args.length === 0) return '';
+        return String(args[0]).trim();
+      }
+      case 'ROUND': {
+        if (args.length === 0) throw new Error('#VALUE!');
+        const num = Number(args[0]);
+        if (isNaN(num)) throw new Error('#VALUE!');
+        const decimals = args.length >= 2 ? Number(args[1]) : 0;
+        const factor = Math.pow(10, decimals);
+        return Math.round(num * factor) / factor;
+      }
+      case 'ABS': {
+        if (args.length === 0) throw new Error('#VALUE!');
+        const num = Number(args[0]);
+        if (isNaN(num)) throw new Error('#VALUE!');
+        return Math.abs(num);
+      }
+      case 'PRODUCT': {
+        const nums = flattenNumbers(args);
+        if (nums.length === 0) return 0;
+        return nums.reduce((acc, curr) => acc * curr, 1);
+      }
+      case 'MEDIAN': {
+        const nums = flattenNumbers(args);
+        if (nums.length === 0) throw new Error('#DIV/0!');
+        nums.sort((a, b) => a - b);
+        const mid = Math.floor(nums.length / 2);
+        return nums.length % 2 !== 0 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
+      }
+      case 'TODAY': {
+        const now = new Date();
+        return now.toISOString().split('T')[0];
+      }
+      case 'NOW': {
+        return new Date().toLocaleString();
+      }
       default:
         throw new Error('#NAME?');
     }

@@ -62,6 +62,27 @@ describe('Ingrid Formula Engine', () => {
     expect(evaluateFormula('=COUNT(A1:A4)', getCell)).toBe(4);
   });
 
+  test('New Ingrid 1.5 functions (UPPER, LOWER, LEN, TRIM, ROUND, ABS, PRODUCT, MEDIAN)', () => {
+    const gridData = {
+      'A1': '  Ingrid Spreadsheets  ',
+      'A2': '3.14159',
+      'A3': '-42',
+      'A4': '2',
+      'A5': '5',
+      'A6': '10'
+    };
+    const getCell = (ref) => gridData[ref] ?? '';
+
+    expect(evaluateFormula('=UPPER("ingrid")', getCell)).toBe('INGRID');
+    expect(evaluateFormula('=LOWER("INGRID")', getCell)).toBe('ingrid');
+    expect(evaluateFormula('=LEN("Ingrid")', getCell)).toBe(6);
+    expect(evaluateFormula('=TRIM(A1)', getCell)).toBe('Ingrid Spreadsheets');
+    expect(evaluateFormula('=ROUND(A2, 2)', getCell)).toBe(3.14);
+    expect(evaluateFormula('=ABS(A3)', getCell)).toBe(42);
+    expect(evaluateFormula('=PRODUCT(A4:A6)', getCell)).toBe(100);
+    expect(evaluateFormula('=MEDIAN(A4:A6)', getCell)).toBe(5);
+  });
+
   test('IF logic and string handling', () => {
     const gridData = {
       'A1': '100'
