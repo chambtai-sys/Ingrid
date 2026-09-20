@@ -1,5 +1,5 @@
 /**
- * Ingrid Client Application Engine
+ * Ingrid Client Application Engine - Google Sheets Edition (v1.5)
  */
 
 // Local column indexing helpers
@@ -179,17 +179,10 @@ class ClientParser {
     this.visitingSet = visitingSet;
   }
 
-  peek() {
-    return this.tokens[this.pos] || null;
-  }
+  peek() { return this.tokens[this.pos] || null; }
+  consume() { return this.tokens[this.pos++] || null; }
 
-  consume() {
-    return this.tokens[this.pos++] || null;
-  }
-
-  parseExpression() {
-    return this.parseComparison();
-  }
+  parseExpression() { return this.parseComparison(); }
 
   parseComparison() {
     let left = this.parseAdditive();
@@ -217,9 +210,7 @@ class ClientParser {
         const lNum = Number(left) || 0;
         const rNum = Number(right) || 0;
         left = op === '+' ? lNum + rNum : lNum - rNum;
-      } else {
-        break;
-      }
+      } else { break; }
     }
     return left;
   }
@@ -235,9 +226,7 @@ class ClientParser {
         const rNum = Number(right) || 0;
         if (op === '/' && rNum === 0) throw new Error('#DIV/0!');
         left = op === '*' ? lNum * rNum : lNum / rNum;
-      } else {
-        break;
-      }
+      } else { break; }
     }
     return left;
   }
@@ -263,48 +252,31 @@ class ClientParser {
       return op === '-' ? -Number(val) : Number(val);
     }
 
-    if (token.type === 'NUMBER') {
-      this.consume();
-      return token.value;
-    }
-
-    if (token.type === 'STRING') {
-      this.consume();
-      return token.value;
-    }
+    if (token.type === 'NUMBER') { this.consume(); return token.value; }
+    if (token.type === 'STRING') { this.consume(); return token.value; }
 
     if (token.type === 'CELL_REF') {
       const refToken = this.consume();
       const refKey = refToken.value.toUpperCase();
-
-      if (this.visitingSet.has(refKey)) {
-        throw new Error('#CIRCULAR!');
-      }
+      if (this.visitingSet.has(refKey)) throw new Error('#CIRCULAR!');
 
       this.visitingSet.add(refKey);
       let rawVal = this.getCellValue ? this.getCellValue(refKey) : null;
       let evaluated = evaluateFormula(rawVal, this.getCellValue, this.visitingSet);
       this.visitingSet.delete(refKey);
 
-      if (typeof evaluated === 'string' && evaluated.startsWith('#')) {
-        throw new Error(evaluated);
-      }
+      if (typeof evaluated === 'string' && evaluated.startsWith('#')) throw new Error(evaluated);
       return evaluated === '' ? 0 : evaluated;
     }
 
-    if (token.type === 'FUNCTION') {
-      return this.parseFunctionCall();
-    }
+    if (token.type === 'FUNCTION') return this.parseFunctionCall();
 
     if (token.type === 'OPERATOR' && token.value === '(') {
       this.consume();
       const val = this.parseExpression();
       const closing = this.peek();
-      if (closing && closing.type === 'OPERATOR' && closing.value === ')') {
-        this.consume();
-      } else {
-        throw new Error('#SYNTAX!');
-      }
+      if (closing && closing.type === 'OPERATOR' && closing.value === ')') this.consume();
+      else throw new Error('#SYNTAX!');
       return val;
     }
 
@@ -316,9 +288,7 @@ class ClientParser {
     const fnName = fnToken.value;
 
     const openParen = this.consume();
-    if (!openParen || openParen.type !== 'OPERATOR' || openParen.value !== '(') {
-      throw new Error('#SYNTAX!');
-    }
+    if (!openParen || openParen.type !== 'OPERATOR' || openParen.value !== '(') throw new Error('#SYNTAX!');
 
     const args = [];
     if (this.peek() && (this.peek().type !== 'OPERATOR' || this.peek().value !== ')')) {
@@ -340,18 +310,13 @@ class ClientParser {
         }
 
         const commaOrClose = this.peek();
-        if (commaOrClose && commaOrClose.type === 'OPERATOR' && commaOrClose.value === ',') {
-          this.consume();
-        } else {
-          break;
-        }
+        if (commaOrClose && commaOrClose.type === 'OPERATOR' && commaOrClose.value === ',') this.consume();
+        else break;
       }
     }
 
     const closeParen = this.consume();
-    if (!closeParen || closeParen.type !== 'OPERATOR' || closeParen.value !== ')') {
-      throw new Error('#SYNTAX!');
-    }
+    if (!closeParen || closeParen.type !== 'OPERATOR' || closeParen.value !== ')') throw new Error('#SYNTAX!');
 
     return this.evaluateBuiltinFunction(fnName, args);
   }
@@ -371,26 +336,15 @@ class ClientParser {
     };
 
     switch (fnName) {
-      case 'SUM': {
-        const nums = flattenNumbers(args);
-        return nums.reduce((acc, curr) => acc + curr, 0);
-      }
+      case 'SUM': return flattenNumbers(args).reduce((a, b) => a + b, 0);
       case 'AVERAGE': {
         const nums = flattenNumbers(args);
         if (nums.length === 0) throw new Error('#DIV/0!');
-        return nums.reduce((acc, curr) => acc + curr, 0) / nums.length;
+        return nums.reduce((a, b) => a + b, 0) / nums.length;
       }
-      case 'COUNT': {
-        return flattenNumbers(args).length;
-      }
-      case 'MIN': {
-        const nums = flattenNumbers(args);
-        return nums.length === 0 ? 0 : Math.min(...nums);
-      }
-      case 'MAX': {
-        const nums = flattenNumbers(args);
-        return nums.length === 0 ? 0 : Math.max(...nums);
-      }
+      case 'COUNT': return flattenNumbers(args).length;
+      case 'MIN': { const nums = flattenNumbers(args); return nums.length === 0 ? 0 : Math.min(...nums); }
+      case 'MAX': { const nums = flattenNumbers(args); return nums.length === 0 ? 0 : Math.max(...nums); }
       case 'IF': {
         if (args.length < 2) throw new Error('#VALUE!');
         return Boolean(args[0]) ? args[1] : (args.length >= 3 ? args[2] : false);
@@ -405,37 +359,67 @@ class ClientParser {
         args.forEach(recurse);
         return str;
       }
-      default:
-        throw new Error('#NAME?');
+      case 'UPPER': return args.length > 0 ? String(args[0]).toUpperCase() : '';
+      case 'LOWER': return args.length > 0 ? String(args[0]).toLowerCase() : '';
+      case 'LEN': return args.length > 0 ? String(args[0]).length : 0;
+      case 'TRIM': return args.length > 0 ? String(args[0]).trim() : '';
+      case 'ROUND': {
+        if (args.length === 0) throw new Error('#VALUE!');
+        const num = Number(args[0]);
+        if (isNaN(num)) throw new Error('#VALUE!');
+        const decimals = args.length >= 2 ? Number(args[1]) : 0;
+        const factor = Math.pow(10, decimals);
+        return Math.round(num * factor) / factor;
+      }
+      case 'ABS': {
+        if (args.length === 0) throw new Error('#VALUE!');
+        const num = Number(args[0]);
+        if (isNaN(num)) throw new Error('#VALUE!');
+        return Math.abs(num);
+      }
+      case 'PRODUCT': {
+        const nums = flattenNumbers(args);
+        return nums.length === 0 ? 0 : nums.reduce((a, b) => a * b, 1);
+      }
+      case 'MEDIAN': {
+        const nums = flattenNumbers(args);
+        if (nums.length === 0) throw new Error('#DIV/0!');
+        nums.sort((a, b) => a - b);
+        const mid = Math.floor(nums.length / 2);
+        return nums.length % 2 !== 0 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
+      }
+      case 'TODAY': return new Date().toISOString().split('T')[0];
+      case 'NOW': return new Date().toLocaleString();
+      default: throw new Error('#NAME?');
     }
   }
 }
 
-// Global Application State
+// Global Application State (Ingrid 1.5)
 class IngridApp {
   constructor() {
     this.sheetData = {
       id: `sheet_${Date.now()}`,
-      title: 'Untitled Spreadsheet',
+      title: 'Untitled spreadsheet',
       rowCount: 50,
       colCount: 26,
       activeTab: 'Sheet1',
       tabs: [
-        {
-          id: 'Sheet1',
-          name: 'Sheet1',
-          cells: {}
-        }
+        { id: 'Sheet1', name: 'Sheet1', cells: {} }
       ]
     };
 
     this.selectedCellRef = 'A1';
 
+    // Undo / Redo Stacks
+    this.undoStack = [];
+    this.redoStack = [];
+
     this.initElements();
     this.bindEvents();
     this.renderTabs();
     this.renderGrid();
-    this.updateStatus('Ingrid Spreadsheet Ready');
+    this.updateStatus('Saved to localhost');
   }
 
   initElements() {
@@ -445,6 +429,9 @@ class IngridApp {
     this.btnImportCsv = document.getElementById('btn-import-csv');
     this.btnExportCsv = document.getElementById('btn-export-csv');
     this.csvFileInput = document.getElementById('csv-file-input');
+
+    this.btnUndo = document.getElementById('btn-undo');
+    this.btnRedo = document.getElementById('btn-redo');
 
     this.btnBold = document.getElementById('btn-bold');
     this.btnItalic = document.getElementById('btn-italic');
@@ -456,6 +443,11 @@ class IngridApp {
     this.btnAlignCenter = document.getElementById('btn-align-center');
     this.btnAlignRight = document.getElementById('btn-align-right');
     this.selectFormat = document.getElementById('select-format');
+
+    this.btnSortAsc = document.getElementById('btn-sort-asc');
+    this.btnSortDesc = document.getElementById('btn-sort-desc');
+    this.btnFindReplace = document.getElementById('btn-find-replace');
+    this.btnComment = document.getElementById('btn-comment');
 
     this.btnAddRow = document.getElementById('btn-add-row');
     this.btnAddCol = document.getElementById('btn-add-col');
@@ -474,6 +466,47 @@ class IngridApp {
     this.btnCloseModal = document.getElementById('btn-close-modal');
     this.sheetsModalList = document.getElementById('sheets-modal-list');
     this.btnNewSpreadsheet = document.getElementById('btn-new-spreadsheet');
+
+    this.findModal = document.getElementById('find-replace-modal');
+    this.btnCloseFindModal = document.getElementById('btn-close-find-modal');
+    this.findInput = document.getElementById('find-input');
+    this.replaceInput = document.getElementById('replace-input');
+    this.findStatus = document.getElementById('find-status');
+    this.btnFindNext = document.getElementById('btn-find-next');
+    this.btnReplaceOne = document.getElementById('btn-replace-one');
+    this.btnReplaceAll = document.getElementById('btn-replace-all');
+
+    this.commentModal = document.getElementById('comment-modal');
+    this.btnCloseCommentModal = document.getElementById('btn-close-comment-modal');
+    this.commentTextarea = document.getElementById('comment-textarea');
+    this.btnSaveComment = document.getElementById('btn-save-comment');
+    this.btnClearComment = document.getElementById('btn-clear-comment');
+  }
+
+  saveState() {
+    if (this.undoStack.length > 30) this.undoStack.shift();
+    this.undoStack.push(JSON.stringify(this.sheetData));
+    this.redoStack = [];
+  }
+
+  undo() {
+    if (this.undoStack.length === 0) return;
+    this.redoStack.push(JSON.stringify(this.sheetData));
+    const previous = this.undoStack.pop();
+    this.sheetData = JSON.parse(previous);
+    this.renderTabs();
+    this.renderGrid();
+    this.updateStatus('Undo performed');
+  }
+
+  redo() {
+    if (this.redoStack.length === 0) return;
+    this.undoStack.push(JSON.stringify(this.sheetData));
+    const next = this.redoStack.pop();
+    this.sheetData = JSON.parse(next);
+    this.renderTabs();
+    this.renderGrid();
+    this.updateStatus('Redo performed');
   }
 
   getActiveTab() {
@@ -487,15 +520,28 @@ class IngridApp {
   }
 
   bindEvents() {
-    // Title change
     this.titleInput.addEventListener('input', () => {
-      this.sheetData.title = this.titleInput.value.trim() || 'Untitled Spreadsheet';
+      this.sheetData.title = this.titleInput.value.trim() || 'Untitled spreadsheet';
     });
 
-    // Save
     this.btnSave.addEventListener('click', () => {
       this.commitFormulaInput();
       this.saveSheet();
+    });
+
+    this.btnUndo.addEventListener('click', () => this.undo());
+    this.btnRedo.addEventListener('click', () => this.redo());
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        if (e.shiftKey) this.redo();
+        else this.undo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        this.redo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'h') {
+        e.preventDefault();
+        this.findModal.classList.add('active');
+      }
     });
 
     // Sheets Modal
@@ -527,30 +573,20 @@ class IngridApp {
 
     // Add Row / Col
     this.btnAddRow.addEventListener('click', () => {
+      this.saveState();
       this.sheetData.rowCount += 5;
       this.renderGrid();
       this.updateStatus(`Expanded rows to ${this.sheetData.rowCount}`);
     });
 
     this.btnAddCol.addEventListener('click', () => {
+      this.saveState();
       this.sheetData.colCount += 2;
       this.renderGrid();
       this.updateStatus(`Expanded columns to ${this.sheetData.colCount}`);
     });
 
-    // Quick Formula Chips
-    document.querySelectorAll('.chip-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const formulaTemplate = btn.getAttribute('data-formula');
-        this.formulaInput.value = formulaTemplate;
-        this.formulaInput.focus();
-        if (formulaTemplate.endsWith('()')) {
-          this.formulaInput.setSelectionRange(formulaTemplate.length - 1, formulaTemplate.length - 1);
-        }
-      });
-    });
-
-    // Formula Input events
+    // Formula Input
     this.formulaInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         this.commitFormulaInput();
@@ -563,25 +599,143 @@ class IngridApp {
       this.renderGrid();
     });
 
+    // Find & Replace
+    this.btnFindReplace.addEventListener('click', () => {
+      this.findModal.classList.add('active');
+      this.findInput.focus();
+    });
+    this.btnCloseFindModal.addEventListener('click', () => {
+      this.findModal.classList.remove('active');
+    });
+
+    this.btnFindNext.addEventListener('click', () => this.findNext());
+    this.btnReplaceOne.addEventListener('click', () => this.replaceOne());
+    this.btnReplaceAll.addEventListener('click', () => this.replaceAll());
+
+    // Note / Comment Modal
+    this.btnComment.addEventListener('click', () => {
+      const tab = this.getActiveTab();
+      const cell = tab.cells[this.selectedCellRef] || {};
+      this.commentTextarea.value = cell.comment || '';
+      this.commentModal.classList.add('active');
+      this.commentTextarea.focus();
+    });
+
+    this.btnCloseCommentModal.addEventListener('click', () => {
+      this.commentModal.classList.remove('active');
+    });
+
+    this.btnSaveComment.addEventListener('click', () => {
+      this.saveState();
+      const tab = this.getActiveTab();
+      if (!tab.cells[this.selectedCellRef]) {
+        tab.cells[this.selectedCellRef] = { raw: '' };
+      }
+      tab.cells[this.selectedCellRef].comment = this.commentTextarea.value.trim();
+      this.commentModal.classList.remove('active');
+      this.renderGrid();
+      this.updateStatus(`Saved note for ${this.selectedCellRef}`);
+    });
+
+    this.btnClearComment.addEventListener('click', () => {
+      this.saveState();
+      const tab = this.getActiveTab();
+      if (tab.cells[this.selectedCellRef]) {
+        delete tab.cells[this.selectedCellRef].comment;
+      }
+      this.commentModal.classList.remove('active');
+      this.renderGrid();
+      this.updateStatus(`Deleted note for ${this.selectedCellRef}`);
+    });
+
     // Add Tab
     this.btnAddTab.addEventListener('click', () => this.addTab());
   }
 
+  findNext() {
+    const query = this.findInput.value.trim();
+    if (!query) return;
+
+    const tab = this.getActiveTab();
+    const cellKeys = Object.keys(tab.cells);
+    let foundRef = null;
+
+    for (const key of cellKeys) {
+      const raw = tab.cells[key] ? String(tab.cells[key].raw || '') : '';
+      if (raw.toLowerCase().includes(query.toLowerCase())) {
+        foundRef = key;
+        break;
+      }
+    }
+
+    if (foundRef) {
+      this.selectCell(foundRef);
+      this.findStatus.textContent = `Found in cell ${foundRef}`;
+    } else {
+      this.findStatus.textContent = `No matches found for "${query}"`;
+    }
+  }
+
+  replaceOne() {
+    const query = this.findInput.value.trim();
+    const replacement = this.replaceInput.value;
+    if (!query) return;
+
+    const tab = this.getActiveTab();
+    const cell = tab.cells[this.selectedCellRef];
+    if (cell && cell.raw && cell.raw.toLowerCase().includes(query.toLowerCase())) {
+      this.saveState();
+      cell.raw = cell.raw.replace(new RegExp(query, 'gi'), replacement);
+      this.renderGrid();
+      this.findStatus.textContent = `Replaced in ${this.selectedCellRef}`;
+    } else {
+      this.findNext();
+    }
+  }
+
+  replaceAll() {
+    const query = this.findInput.value.trim();
+    const replacement = this.replaceInput.value;
+    if (!query) return;
+
+    this.saveState();
+    const tab = this.getActiveTab();
+    let count = 0;
+
+    Object.keys(tab.cells).forEach(key => {
+      if (tab.cells[key] && tab.cells[key].raw) {
+        const orig = tab.cells[key].raw;
+        const updated = orig.replace(new RegExp(query, 'gi'), replacement);
+        if (orig !== updated) {
+          tab.cells[key].raw = updated;
+          count++;
+        }
+      }
+    });
+
+    this.renderGrid();
+    this.findStatus.textContent = `Replaced ${count} occurrence(s)`;
+  }
+
   commitFormulaInput() {
-    this.applyFormulaValue(this.formulaInput.value, this.selectedCellRef);
+    const tab = this.getActiveTab();
+    const cell = tab.cells[this.selectedCellRef] || {};
+    if (cell.raw !== this.formulaInput.value) {
+      this.saveState();
+      this.applyFormulaValue(this.formulaInput.value, this.selectedCellRef);
+    }
   }
 
   updateStatus(msg) {
     this.statusText.textContent = msg;
   }
 
-  // Render Grid Header & Body
+  // Render Grid
   renderGrid() {
     const tab = this.getActiveTab();
     const rowCount = this.sheetData.rowCount;
     const colCount = this.sheetData.colCount;
 
-    // Build Header
     let headerHtml = '<tr><th class="corner-header"></th>';
     for (let c = 0; c < colCount; c++) {
       headerHtml += `<th class="col-header">${indexToColLetter(c)}</th>`;
@@ -589,13 +743,11 @@ class IngridApp {
     headerHtml += '</tr>';
     this.gridHeader.innerHTML = headerHtml;
 
-    // Helper for cell values
     const getCellValue = (ref) => {
       const cellObj = tab.cells[ref];
       return cellObj ? cellObj.raw : '';
     };
 
-    // Build Body
     let bodyHtml = '';
     for (let r = 0; r < rowCount; r++) {
       let rowHtml = `<tr><td class="row-header">${r + 1}</td>`;
@@ -607,11 +759,11 @@ class IngridApp {
         const cellData = tab.cells[cellRef] || {};
         const rawVal = cellData.raw ?? '';
         const style = cellData.style || {};
+        const hasComment = Boolean(cellData.comment);
 
         const evaluatedVal = evaluateFormula(rawVal, getCellValue);
         const formattedVal = this.formatDisplayValue(evaluatedVal, style.format);
 
-        // Build style inline string
         let inlineStyle = '';
         if (style.bold) inlineStyle += 'font-weight: bold;';
         if (style.italic) inlineStyle += 'font-style: italic;';
@@ -620,10 +772,10 @@ class IngridApp {
         if (style.color) inlineStyle += `color: ${style.color};`;
         if (style.align) inlineStyle += `text-align: ${style.align};`;
 
-        rowHtml += `<td class="cell ${isSelected ? 'selected' : ''}"
+        rowHtml += `<td class="cell ${isSelected ? 'selected' : ''} ${hasComment ? 'has-comment' : ''}"
                         data-ref="${cellRef}"
                         style="${inlineStyle}"
-                        title="${this.escapeHtml(rawVal)}">${this.escapeHtml(formattedVal)}</td>`;
+                        title="${hasComment ? 'Note: ' + this.escapeHtml(cellData.comment) : this.escapeHtml(rawVal)}">${this.escapeHtml(formattedVal)}</td>`;
       }
       rowHtml += '</tr>';
       bodyHtml += rowHtml;
@@ -631,14 +783,13 @@ class IngridApp {
 
     this.gridBody.innerHTML = bodyHtml;
 
-    // Attach Cell Event Listeners
     this.gridBody.querySelectorAll('.cell').forEach(td => {
-      td.addEventListener('click', (e) => {
+      td.addEventListener('click', () => {
         const ref = td.getAttribute('data-ref');
         this.selectCell(ref);
       });
 
-      td.addEventListener('dblclick', (e) => {
+      td.addEventListener('dblclick', () => {
         const ref = td.getAttribute('data-ref');
         this.startCellInlineEdit(td, ref);
       });
@@ -658,26 +809,21 @@ class IngridApp {
 
   formatDisplayValue(val, format) {
     if (val === null || val === undefined || val === '') return '';
-    if (typeof val === 'string' && val.startsWith('#')) return val; // Error code
+    if (typeof val === 'string' && val.startsWith('#')) return val;
 
     const num = Number(val);
     if (isNaN(num)) return String(val);
 
     switch (format) {
-      case 'number':
-        return num.toFixed(2);
-      case 'currency':
-        return '$' + num.toFixed(2);
-      case 'percent':
-        return (num * 100).toFixed(1) + '%';
-      default:
-        return String(val);
+      case 'number': return num.toFixed(2);
+      case 'currency': return '$' + num.toFixed(2);
+      case 'percent': return (num * 100).toFixed(1) + '%';
+      default: return String(val);
     }
   }
 
   selectCell(refStr) {
     if (this.selectedCellRef !== refStr) {
-      // Commit pending edit for previously selected cell before moving
       this.commitFormulaInput();
       this.selectedCellRef = refStr;
       this.cellIdIndicator.textContent = refStr;
@@ -686,7 +832,6 @@ class IngridApp {
       const cellData = tab.cells[refStr] || {};
       this.formulaInput.value = cellData.raw ?? '';
 
-      // Update selected class in DOM
       this.gridBody.querySelectorAll('.cell.selected').forEach(c => c.classList.remove('selected'));
       const targetTd = this.gridBody.querySelector(`.cell[data-ref="${refStr}"]`);
       if (targetTd) {
@@ -709,16 +854,14 @@ class IngridApp {
 
     const commitEdit = () => {
       const newVal = input.value;
+      if (currentRaw !== newVal) this.saveState();
       this.applyFormulaValue(newVal, refStr);
       this.renderGrid();
     };
 
     input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        commitEdit();
-      } else if (e.key === 'Escape') {
-        this.renderGrid();
-      }
+      if (e.key === 'Enter') commitEdit();
+      else if (e.key === 'Escape') this.renderGrid();
     });
 
     input.addEventListener('blur', () => commitEdit());
@@ -736,6 +879,7 @@ class IngridApp {
   }
 
   toggleCellFormat(prop) {
+    this.saveState();
     const tab = this.getActiveTab();
     const cell = tab.cells[this.selectedCellRef] || { raw: '' };
     if (!cell.style) cell.style = {};
@@ -747,6 +891,7 @@ class IngridApp {
   }
 
   setCellProperty(prop, value) {
+    this.saveState();
     const tab = this.getActiveTab();
     const cell = tab.cells[this.selectedCellRef] || { raw: '' };
     if (!cell.style) cell.style = {};
@@ -778,7 +923,7 @@ class IngridApp {
     this.selectFormat.value = style.format || 'general';
   }
 
-  // Multi-tab Management
+  // Multi-tab
   renderTabs() {
     this.tabsList.innerHTML = '';
     this.sheetData.tabs.forEach(tab => {
@@ -796,6 +941,7 @@ class IngridApp {
   }
 
   addTab() {
+    this.saveState();
     this.commitFormulaInput();
     const newTabNum = this.sheetData.tabs.length + 1;
     const tabId = `Sheet${newTabNum}`;
@@ -810,7 +956,7 @@ class IngridApp {
     this.updateStatus(`Added ${tabId}`);
   }
 
-  // Server API calls
+  // Server persistence
   async saveSheet() {
     try {
       this.updateStatus('Saving spreadsheet...');
@@ -821,9 +967,9 @@ class IngridApp {
       });
       const data = await res.json();
       if (data.success) {
-        this.updateStatus(`Spreadsheet saved at ${new Date(data.updatedAt).toLocaleTimeString()}`);
+        this.updateStatus(`Saved at ${new Date(data.updatedAt).toLocaleTimeString()}`);
       } else {
-        this.updateStatus('Failed to save spreadsheet');
+        this.updateStatus('Failed to save');
       }
     } catch (err) {
       this.updateStatus(`Save error: ${err.message}`);
@@ -851,7 +997,7 @@ class IngridApp {
         item.innerHTML = `
           <div class="sheet-item-info">
             <span class="sheet-item-title">${this.escapeHtml(s.title)}</span>
-            <span class="sheet-item-date">Last saved: ${new Date(s.updatedAt).toLocaleString()}</span>
+            <span class="sheet-item-date">Saved: ${new Date(s.updatedAt).toLocaleString()}</span>
           </div>
           <button class="btn btn-secondary btn-sm" style="padding: 4px 8px;"><i class="fa-solid fa-folder-open"></i> Open</button>
         `;
@@ -874,35 +1020,29 @@ class IngridApp {
       const data = await res.json();
 
       this.sheetData = data;
-      this.titleInput.value = this.sheetData.title || 'Untitled Spreadsheet';
+      this.titleInput.value = this.sheetData.title || 'Untitled spreadsheet';
       this.renderTabs();
       this.renderGrid();
-      this.updateStatus(`Loaded sheet: ${this.sheetData.title}`);
+      this.updateStatus(`Loaded: ${this.sheetData.title}`);
     } catch (err) {
-      this.updateStatus(`Error loading sheet: ${err.message}`);
+      this.updateStatus(`Error loading: ${err.message}`);
     }
   }
 
   createNewSheet() {
     this.sheetData = {
       id: `sheet_${Date.now()}`,
-      title: 'Untitled Spreadsheet',
+      title: 'Untitled spreadsheet',
       rowCount: 50,
       colCount: 26,
       activeTab: 'Sheet1',
-      tabs: [
-        {
-          id: 'Sheet1',
-          name: 'Sheet1',
-          cells: {}
-        }
-      ]
+      tabs: [{ id: 'Sheet1', name: 'Sheet1', cells: {} }]
     };
     this.titleInput.value = this.sheetData.title;
     this.selectedCellRef = 'A1';
     this.renderTabs();
     this.renderGrid();
-    this.updateStatus('Created new spreadsheet');
+    this.updateStatus('Created blank spreadsheet');
   }
 
   exportCsv() {
@@ -913,7 +1053,6 @@ class IngridApp {
     const file = event.target.files[0];
     if (!file) return;
 
-    const formData = new FormData();
     const csvText = await file.text();
 
     try {
@@ -929,12 +1068,12 @@ class IngridApp {
         this.titleInput.value = this.sheetData.title;
         this.renderTabs();
         this.renderGrid();
-        this.updateStatus(`Successfully imported ${file.name}`);
+        this.updateStatus(`Imported ${file.name}`);
       } else {
         this.updateStatus('CSV import failed');
       }
     } catch (err) {
-      this.updateStatus(`CSV import error: ${err.message}`);
+      this.updateStatus(`Import error: ${err.message}`);
     }
 
     this.csvFileInput.value = '';

@@ -3,107 +3,119 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ingrid - Localhost Spreadsheet Application [BETA]</title>
+  <title>Untitled spreadsheet - Ingrid Sheets 1.5 [v1.5 BETA]</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
 </head>
 <body>
-  <div id="app">
-    <!-- Top Banner with ASCII Art Logo & Beta Badge -->
+  <div id="app" class="google-sheets-theme">
+    <!-- Top Bar: Logo, Title & Google Sheets Navigation Menu -->
     <header class="app-header">
-      <div class="logo-container">
-        <pre class="ascii-logo">
- ██████╗███╗   ██╗ ██████╗  ██████╗  ██████╗
-  ██║  ████╗  ██║██╔════╝  ██╔══██╗ ██╔══██╗
-  ██║  ██╔██╗ ██║██║  ███╗ ██████╔╝ ██║  ██║
-  ██║  ██║╚██╗██║██║   ██║ ██╔══██╗ ██║  ██║
- ██████╗██║ ╚████║╚██████╔╝██║  ██║ ██████╔╝
- ╚═════╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝ ╚═════╝</pre>
-        <div class="brand-details">
-          <div class="brand-title-row">
-            <span class="brand-name">Ingrid</span>
-            <span class="beta-badge">BETA</span>
+      <div class="header-left">
+        <div class="sheets-logo-icon">
+          <i class="fa-solid fa-table"></i>
+        </div>
+        <div class="document-details">
+          <div class="document-title-row">
+            <input type="text" id="spreadsheet-title" class="title-input" value="Untitled spreadsheet" placeholder="Untitled spreadsheet">
+            <span class="beta-badge">v1.5 BETA</span>
           </div>
-          <span class="brand-subtitle">INtelligent GRID — Localhost Spreadsheet</span>
+          <nav class="sheets-menu-bar">
+            <span class="menu-item" id="menu-file">File</span>
+            <span class="menu-item" id="menu-edit">Edit</span>
+            <span class="menu-item" id="menu-view">View</span>
+            <span class="menu-item" id="menu-insert">Insert</span>
+            <span class="menu-item" id="menu-format">Format</span>
+            <span class="menu-item" id="menu-data">Data</span>
+            <span class="menu-item" id="menu-help">Help</span>
+          </nav>
         </div>
       </div>
 
-      <div class="header-actions">
-        <input type="text" id="spreadsheet-title" class="title-input" value="Untitled Spreadsheet" placeholder="Spreadsheet Title">
-        <button id="btn-save" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save</button>
-        <button id="btn-sheets-list" class="btn btn-secondary"><i class="fa-solid fa-folder-open"></i> My Sheets</button>
+      <div class="header-right">
+        <div class="ascii-logo-box">
+          <pre class="ascii-logo">
+ ██████╗███╗   ██╗ ██████╗  ██████╗  ██████╗
+  ██║  ████╗  ██║██╔════╝  ██╔══██╗ ██╔══██╗
+  ██║  ██╔██╗ ██║██║  ███╗ ██████╔╝ ██║  ██║ [v1.5 BETA]
+  ██║  ██║╚██╗██║██║   ██║ ██╔══██╗ ██║  ██║
+ ██████╗██║ ╚████║╚██████╔╝██║  ██║ ██████╔╝</pre>
+        </div>
+        <button id="btn-save" class="btn btn-sheets-share"><i class="fa-solid fa-cloud-arrow-up"></i> Save Sheet</button>
+        <button id="btn-sheets-list" class="btn btn-secondary"><i class="fa-solid fa-folder-open"></i> Open</button>
+        <button id="btn-export-csv" class="btn btn-secondary"><i class="fa-solid fa-download"></i> Export CSV</button>
         <button id="btn-import-csv" class="btn btn-secondary"><i class="fa-solid fa-file-import"></i> Import CSV</button>
-        <button id="btn-export-csv" class="btn btn-secondary"><i class="fa-solid fa-file-export"></i> Export CSV</button>
         <input type="file" id="csv-file-input" accept=".csv" style="display: none;">
       </div>
     </header>
 
-    <!-- Toolbar -->
+    <!-- Google Sheets Formatting Action Bar / Toolbar -->
     <section class="toolbar">
       <div class="tool-group">
-        <button id="btn-bold" class="tool-btn" title="Bold"><i class="fa-solid fa-bold"></i></button>
-        <button id="btn-italic" class="tool-btn" title="Italic"><i class="fa-solid fa-italic"></i></button>
-        <button id="btn-underline" class="tool-btn" title="Underline"><i class="fa-solid fa-underline"></i></button>
+        <button id="btn-undo" class="tool-btn" title="Undo (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i></button>
+        <button id="btn-redo" class="tool-btn" title="Redo (Ctrl+Y)"><i class="fa-solid fa-rotate-right"></i></button>
       </div>
 
       <div class="tool-divider"></div>
 
       <div class="tool-group">
-        <label for="bg-color-picker" class="color-picker-label" title="Background Color">
-          <i class="fa-solid fa-fill-drip"></i>
-          <input type="color" id="bg-color-picker" value="#ffffff">
-        </label>
-        <label for="text-color-picker" class="color-picker-label" title="Text Color">
-          <i class="fa-solid fa-font"></i>
-          <input type="color" id="text-color-picker" value="#1e293b">
-        </label>
-      </div>
-
-      <div class="tool-divider"></div>
-
-      <div class="tool-group">
-        <button id="btn-align-left" class="tool-btn" title="Align Left"><i class="fa-solid fa-align-left"></i></button>
-        <button id="btn-align-center" class="tool-btn" title="Align Center"><i class="fa-solid fa-align-center"></i></button>
-        <button id="btn-align-right" class="tool-btn" title="Align Right"><i class="fa-solid fa-align-right"></i></button>
-      </div>
-
-      <div class="tool-divider"></div>
-
-      <div class="tool-group">
-        <select id="select-format" class="tool-select" title="Number Format">
-          <option value="general">General</option>
-          <option value="number">Number (0.00)</option>
-          <option value="currency">Currency ($)</option>
-          <option value="percent">Percentage (%)</option>
+        <select id="select-format" class="tool-select" title="Number format">
+          <option value="general">123 (Automatic)</option>
+          <option value="number">1,000.00 (Number)</option>
+          <option value="currency">$1,000.00 (Currency)</option>
+          <option value="percent">100.00% (Percent)</option>
         </select>
       </div>
 
       <div class="tool-divider"></div>
 
       <div class="tool-group">
-        <button id="btn-add-row" class="tool-btn" title="Add Row Below"><i class="fa-solid fa-plus"></i> Row</button>
-        <button id="btn-add-col" class="tool-btn" title="Add Column Right"><i class="fa-solid fa-plus"></i> Column</button>
+        <button id="btn-bold" class="tool-btn" title="Bold (Ctrl+B)"><i class="fa-solid fa-bold"></i></button>
+        <button id="btn-italic" class="tool-btn" title="Italic (Ctrl+I)"><i class="fa-solid fa-italic"></i></button>
+        <button id="btn-underline" class="tool-btn" title="Underline (Ctrl+U)"><i class="fa-solid fa-underline"></i></button>
+        <label for="text-color-picker" class="color-picker-label" title="Text color">
+          <i class="fa-solid fa-font"></i>
+          <input type="color" id="text-color-picker" value="#202124">
+        </label>
+        <label for="bg-color-picker" class="color-picker-label" title="Fill color">
+          <i class="fa-solid fa-fill-drip"></i>
+          <input type="color" id="bg-color-picker" value="#ffffff">
+        </label>
       </div>
 
       <div class="tool-divider"></div>
 
-      <div class="tool-group quick-formulas">
-        <span class="toolbar-label">Quick:</span>
-        <button class="chip-btn" data-formula="=SUM()">SUM</button>
-        <button class="chip-btn" data-formula="=AVERAGE()">AVG</button>
-        <button class="chip-btn" data-formula="=COUNT()">COUNT</button>
-        <button class="chip-btn" data-formula="=IF()">IF</button>
+      <div class="tool-group">
+        <button id="btn-align-left" class="tool-btn" title="Horizontal align left"><i class="fa-solid fa-align-left"></i></button>
+        <button id="btn-align-center" class="tool-btn" title="Horizontal align center"><i class="fa-solid fa-align-center"></i></button>
+        <button id="btn-align-right" class="tool-btn" title="Horizontal align right"><i class="fa-solid fa-align-right"></i></button>
+      </div>
+
+      <div class="tool-divider"></div>
+
+      <div class="tool-group">
+        <button id="btn-sort-asc" class="tool-btn" title="Sort Column A to Z"><i class="fa-solid fa-arrow-down-a-z"></i> Sort A-Z</button>
+        <button id="btn-sort-desc" class="tool-btn" title="Sort Column Z to A"><i class="fa-solid fa-arrow-up-z-a"></i> Sort Z-A</button>
+        <button id="btn-find-replace" class="tool-btn" title="Find & Replace (Ctrl+H)"><i class="fa-solid fa-magnifying-glass"></i> Find</button>
+        <button id="btn-comment" class="tool-btn" title="Insert Note / Comment"><i class="fa-solid fa-comment-medical"></i> Note</button>
+      </div>
+
+      <div class="tool-divider"></div>
+
+      <div class="tool-group">
+        <button id="btn-add-row" class="tool-btn" title="Add 5 Rows"><i class="fa-solid fa-plus"></i> Row</button>
+        <button id="btn-add-col" class="tool-btn" title="Add 2 Columns"><i class="fa-solid fa-plus"></i> Col</button>
       </div>
     </section>
 
-    <!-- Formula Bar -->
+    <!-- Google Sheets Formula Bar -->
     <section class="formula-bar">
       <div id="active-cell-id" class="cell-id-indicator">A1</div>
-      <div class="formula-fx"><i class="fa-solid fa-square-root-variable"></i></div>
-      <input type="text" id="formula-input" class="formula-input" placeholder="Select a cell or type a formula (=SUM(A1:A5))">
+      <div class="formula-fx-icon">fx</div>
+      <input type="text" id="formula-input" class="formula-input" placeholder="Enter expression or formula (=SUM(A1:A10))">
     </section>
 
-    <!-- Main Grid Workspace -->
+    <!-- Spreadsheet Grid -->
     <main class="grid-container" id="grid-container">
       <table class="spreadsheet-table" id="spreadsheet-table">
         <thead id="grid-header"></thead>
@@ -111,15 +123,15 @@
       </table>
     </main>
 
-    <!-- Bottom Sheet Tabs & Status Bar -->
+    <!-- Tab Bar & Status Footer -->
     <footer class="app-footer">
       <div class="tab-bar">
+        <button id="btn-add-tab" class="btn-icon" title="Add sheet"><i class="fa-solid fa-plus"></i></button>
         <div id="tabs-list" class="tabs-list"></div>
-        <button id="btn-add-tab" class="btn-icon" title="Add Sheet Tab"><i class="fa-solid fa-plus"></i></button>
       </div>
       <div id="status-bar" class="status-bar">
-        <span id="status-text">Ready</span>
-        <span id="status-info" class="status-info">Ingrid v0.1.0-beta | Localhost</span>
+        <span id="status-text">All changes saved to localhost</span>
+        <span id="status-info" class="status-info">Ingrid v1.5 [Google Sheets Edition]</span>
       </div>
     </footer>
   </div>
@@ -135,7 +147,50 @@
         <div id="sheets-modal-list" class="sheets-list"></div>
       </div>
       <div class="modal-footer">
-        <button id="btn-new-spreadsheet" class="btn btn-primary"><i class="fa-solid fa-file-circle-plus"></i> Create New Spreadsheet</button>
+        <button id="btn-new-spreadsheet" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Blank Spreadsheet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Find & Replace Modal -->
+  <div id="find-replace-modal" class="modal">
+    <div class="modal-content" style="width: 420px;">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-magnifying-glass"></i> Find and replace</h3>
+        <button id="btn-close-find-modal" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 12px;">
+        <label class="form-label">
+          Find:
+          <input type="text" id="find-input" class="modal-input" placeholder="Text or value to find">
+        </label>
+        <label class="form-label">
+          Replace with:
+          <input type="text" id="replace-input" class="modal-input" placeholder="Replacement text">
+        </label>
+        <div id="find-status" style="font-size: 12px; color: #5f6368;"></div>
+      </div>
+      <div class="modal-footer" style="gap: 8px;">
+        <button id="btn-find-next" class="btn btn-secondary">Find</button>
+        <button id="btn-replace-one" class="btn btn-secondary">Replace</button>
+        <button id="btn-replace-all" class="btn btn-primary">Replace all</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cell Comment / Note Popover -->
+  <div id="comment-modal" class="modal">
+    <div class="modal-content" style="width: 380px;">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-comment-dots"></i> Cell Note / Comment</h3>
+        <button id="btn-close-comment-modal" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <textarea id="comment-textarea" class="modal-textarea" rows="4" placeholder="Type a note or description for cell..."></textarea>
+      </div>
+      <div class="modal-footer" style="gap: 8px;">
+        <button id="btn-clear-comment" class="btn btn-secondary">Delete Note</button>
+        <button id="btn-save-comment" class="btn btn-primary">Save Note</button>
       </div>
     </div>
   </div>
